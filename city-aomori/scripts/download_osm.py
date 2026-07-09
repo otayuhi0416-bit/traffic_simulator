@@ -3,13 +3,13 @@ import requests
 
 def download_osm():
     # 緯度経度のバウンディングボックス (min_lon, min_lat, max_lon, max_lat)
-    # ユーザー指定範囲: (39.70151, 140.10277) から (39.72087, 140.11950)
-    bbox = "140.10277,39.70151,140.11950,39.72087"
+    # ユーザー指定範囲: (40.81494, 140.73040) から (40.82761, 140.76147)
+    bbox = "140.73040,40.81494,140.76147,40.82761"# 変更
     url = f"https://overpass-api.de/api/map?bbox={bbox}"
     
     # 保存先ディレクトリの作成
     os.makedirs("data/raw", exist_ok=True)
-    output_path = "data/raw/akita_center.osm"
+    output_path = "data/raw/aomori_center.osm"#　変更
     
     print(f"Downloading OSM data for bbox {bbox}...")
     headers = {

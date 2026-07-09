@@ -16,11 +16,11 @@ try:
 except ImportError:
     pass
 
-def process_traffic(target_date="2026/04/08", start_hour=8, duration_hours=1):
-    traffic_csv = "resources/typeB_akita_2026_04/秋田県警_202604.csv"
+def process_traffic(target_date="2026/05/08", start_hour=8, duration_hours=1):
+    traffic_csv = "resources/typeB_aomori_2026_05/青森県警_202605.csv"#変更
     match_table_path = "data/match_table.json"
-    net_path = "network/akita.net.xml"
-    output_rou = "demand/akita.rou.xml"
+    net_path = "network/aomori.net.xml"  #変更
+    output_rou = "demand/aomori.rou.xml"  #変更
     
     if not os.path.exists(match_table_path):
         print(f"Error: {match_table_path} not found. Run match_network.py first.")
@@ -46,8 +46,8 @@ def process_traffic(target_date="2026/04/08", start_hour=8, duration_hours=1):
     # キー: リンク番号, 値: 車両台数の合計
     link_traffic = {}
     
-    # 開始時刻と終了時刻の生成 (例: 2026/04/08 08:00 〜 09:00)
-    # csv内の時刻フォーマット: "2026/04/01 00:00"
+    # 開始時刻と終了時刻の生成 (例: 2026/05/08 08:00 〜 09:00) #変更
+    # csv内の時刻フォーマット: "2026/05/01 00:00"　　　　　　　 #変更
     start_dt = datetime.strptime(f"{target_date} {start_hour:02d}:00", "%Y/%m/%d %H:%M")
     # 終了時刻
     end_dt = datetime.strptime(f"{target_date} {(start_hour + duration_hours):02d}:00", "%Y/%m/%d %H:%M")
@@ -153,8 +153,8 @@ def process_traffic(target_date="2026/04/08", start_hour=8, duration_hours=1):
     print(f"Generated {flow_counter} flows in {output_rou}")
 
 if __name__ == "__main__":
-    # デフォルト: 2026年4月8日 (水) 08:00 〜 09:00 (1時間)
-    target_date = "2026/04/08"
+    # デフォルト: 2026年5月8日 (水) 08:00 〜 09:00 (1時間)
+    target_date = "2026/05/08"#変更
     start_hour = 8
     
     if len(sys.argv) > 2:

@@ -7,8 +7,8 @@ if "SUMO_HOME" not in os.environ:
     os.environ["SUMO_HOME"] = "C:\\Program Files (x86)\\Eclipse\\Sumo"
 
 def build_network():
-    osm_file = "data/raw/akita_center.osm"
-    output_net = "network/akita.net.xml"
+    osm_file = "data/raw/aomori_center.osm"#変更
+    output_net = "network/aomori.net.xml"  #変更
     
     # 必要なディレクトリの作成
     os.makedirs("network", exist_ok=True)

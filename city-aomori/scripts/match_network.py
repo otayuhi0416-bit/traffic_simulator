@@ -80,9 +80,9 @@ def parse_definition_csv(csv_path):
     return mapping
 
 def match_network():
-    net_path = "network/akita.net.xml"
+    net_path = "network/aomori.net.xml" #変更
     intersections_csv = "data/raw/intersections.csv"
-    definition_csv = "resources/typeC_akita_2026_04/秋田県警_定義_202604.csv"
+    definition_csv = "resources/typeC_aomori_2026_05/青森県警_定義_202605.csv"#変更
     output_mapping = "data/match_table.json"
     
     if not os.path.exists(net_path):
