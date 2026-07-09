@@ -4,13 +4,13 @@ import requests
 from bs4 import BeautifulSoup
 
 def scrape_intersections():
-    url = "https://www.tmt.or.jp/research/index10_5.html"
+    url = "https://www.tmt.or.jp/research/index10_2.html" #変更
     os.makedirs("data/raw", exist_ok=True)
     output_path = "data/raw/intersections.csv"
     
     # フィルタ用の緯度経度範囲
-    min_lat, max_lat = 39.70151, 39.72087
-    min_lon, max_lon = 140.10277, 140.11950
+    min_lat, max_lat = 40.81494, 40.82761 #変更
+    min_lon, max_lon = 140.73040, 140.76147 #変更
     
     print(f"Fetching intersections from {url}...")
     try:
