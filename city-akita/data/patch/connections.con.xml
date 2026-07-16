@@ -1,0 +1,42 @@
+<connections xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/connections_file.xsd">
+    <!-- =================================================================
+         交差点64 (1386236878) の接続の上書き定義 (南側本線の30mテーパーに対応)
+         ================================================================= -->
+
+    <!-- 旧本線エッジ名からの古い重複接続の削除 -->
+    <delete from="461237392#4" to="461237392#5"/>
+    <delete from="461237392#4" to="124585729#0"/>
+    <delete from="461237392#4" to="124579517#0"/>
+
+    <!-- =================================================================
+         1. 北側流入 (-461237392#5: 3車線) からの流出接続
+         - lane 0 (一番左・東側): 直進／左折 (直進先:-461237392#4 の lane 0, 左折先:124579517#0 の lane 0)
+         - lane 1 (中央): 直進 (直進先:-461237392#4 の lane 1)
+         - lane 2 (一番右・西側): 右折専用 (右折先:124585729#0 の lane 0)
+         ================================================================= -->
+    <!-- lane 0: 直進/左折 -->
+    <connection from="-461237392#5" to="-461237392#4" fromLane="0" toLane="0"/>
+    <connection from="-461237392#5" to="124579517#0" fromLane="0" toLane="0"/>
+    
+    <!-- lane 1: 直進専用 -->
+    <connection from="-461237392#5" to="-461237392#4" fromLane="1" toLane="1"/>
+    
+    <!-- lane 2: 右折専用 -->
+    <connection from="-461237392#5" to="124585729#0" fromLane="2" toLane="0"/>
+
+    <!-- =================================================================
+         2. 南側流入 (edge_64_south_taper_to_junc: 3車線) からの流出接続
+         - lane 0 (一番左・西側): 直進／左折 (直進先:461237392#5 の lane 0, 左折先:124585729#0 の lane 0)
+         - lane 1 (中央): 直進 (直進先:461237392#5 の lane 1)
+         - lane 2 (一番右・東側): 右折専用 (右折先:124579517#0 の lane 0)
+         ================================================================= -->
+    <!-- lane 0: 直進/左折 -->
+    <connection from="edge_64_south_taper_to_junc" to="461237392#5" fromLane="0" toLane="0"/>
+    <connection from="edge_64_south_taper_to_junc" to="124585729#0" fromLane="0" toLane="0"/>
+    
+    <!-- lane 1: 直進専用 -->
+    <connection from="edge_64_south_taper_to_junc" to="461237392#5" fromLane="1" toLane="1"/>
+    
+    <!-- lane 2: 右折専用 -->
+    <connection from="edge_64_south_taper_to_junc" to="124579517#0" fromLane="2" toLane="0"/>
+</connections>
