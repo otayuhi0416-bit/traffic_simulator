@@ -16,3 +16,15 @@ env/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+node_modules/.bin/
+
+node_modules/\@puppeteer/browsers/lib/browser-data/
+
+node_modules/\@puppeteer/browsers/lib/
+
+node_modules/\@puppeteer/browsers/
+
+node_modules/chromium-bidi/
+
+node_modules/
