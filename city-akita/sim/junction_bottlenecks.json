@@ -1,0 +1,257 @@
+[
+    {
+        "node_id": "1386236878",
+        "intersection_num": "64",
+        "total_waiting_time": 11967731.0
+    },
+    {
+        "node_id": "1386293515",
+        "intersection_num": "115",
+        "total_waiting_time": 6627939.0
+    },
+    {
+        "node_id": "1386232011",
+        "intersection_num": "62",
+        "total_waiting_time": 5832585.0
+    },
+    {
+        "node_id": "1386203158",
+        "intersection_num": "63",
+        "total_waiting_time": 4605531.0
+    },
+    {
+        "node_id": "cluster_4567710925_4567710928",
+        "intersection_num": "65",
+        "total_waiting_time": 3540058.0
+    },
+    {
+        "node_id": "1386351421",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 2748672.0
+    },
+    {
+        "node_id": "cluster_1386121397_1876800914",
+        "intersection_num": "117",
+        "total_waiting_time": 2154707.0
+    },
+    {
+        "node_id": "cluster_1332330172_9242143122",
+        "intersection_num": "29",
+        "total_waiting_time": 956493.0
+    },
+    {
+        "node_id": "1386127057",
+        "intersection_num": "114",
+        "total_waiting_time": 903737.0
+    },
+    {
+        "node_id": "4565774303",
+        "intersection_num": "91",
+        "total_waiting_time": 805569.0
+    },
+    {
+        "node_id": "1386322681",
+        "intersection_num": "66",
+        "total_waiting_time": 546666.0
+    },
+    {
+        "node_id": "1386147778",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 179453.0
+    },
+    {
+        "node_id": "1386380538",
+        "intersection_num": "60",
+        "total_waiting_time": 140479.0
+    },
+    {
+        "node_id": "1386329668",
+        "intersection_num": "61",
+        "total_waiting_time": 127223.0
+    },
+    {
+        "node_id": "cluster_1386303429_1386338978",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 97670.0
+    },
+    {
+        "node_id": "1386283786",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 93466.0
+    },
+    {
+        "node_id": "1386111543",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 68170.0
+    },
+    {
+        "node_id": "1386233267",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 62794.0
+    },
+    {
+        "node_id": "1386213364",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 34267.0
+    },
+    {
+        "node_id": "cluster_2989079284_3506136520",
+        "intersection_num": "86",
+        "total_waiting_time": 31130.0
+    },
+    {
+        "node_id": "1386359518",
+        "intersection_num": "113",
+        "total_waiting_time": 23291.0
+    },
+    {
+        "node_id": "1386313263",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 22829.0
+    },
+    {
+        "node_id": "1386158831",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 21787.0
+    },
+    {
+        "node_id": "1386165095",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 19399.0
+    },
+    {
+        "node_id": "cluster_1386402174_3506136420",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 18929.0
+    },
+    {
+        "node_id": "1386262457",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 18598.0
+    },
+    {
+        "node_id": "1386371624",
+        "intersection_num": "59",
+        "total_waiting_time": 18335.0
+    },
+    {
+        "node_id": "1386256986",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 16109.0
+    },
+    {
+        "node_id": "1386129028",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 15910.0
+    },
+    {
+        "node_id": "cluster_1386148351_3506136441",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 14616.0
+    },
+    {
+        "node_id": "1386170838",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 12171.0
+    },
+    {
+        "node_id": "cluster_4565141527_4565774295",
+        "intersection_num": "90",
+        "total_waiting_time": 11077.0
+    },
+    {
+        "node_id": "1386248090",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 11049.0
+    },
+    {
+        "node_id": "cluster_1386332010_7639715911",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 11026.0
+    },
+    {
+        "node_id": "cluster_1386352267_3506136289",
+        "intersection_num": "88",
+        "total_waiting_time": 10617.0
+    },
+    {
+        "node_id": "cluster_4565141522_4565141526",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 9585.0
+    },
+    {
+        "node_id": "1386233988",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 8701.0
+    },
+    {
+        "node_id": "1386240125",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 8295.0
+    },
+    {
+        "node_id": "1386282772",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 7169.0
+    },
+    {
+        "node_id": "1386227458",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 6646.0
+    },
+    {
+        "node_id": "cluster_1386264612_4565747618",
+        "intersection_num": "89",
+        "total_waiting_time": 5866.0
+    },
+    {
+        "node_id": "1386352198",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 5269.0
+    },
+    {
+        "node_id": "cluster_1386237564_3506136459",
+        "intersection_num": "87",
+        "total_waiting_time": 5122.0
+    },
+    {
+        "node_id": "1386154440",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 4823.0
+    },
+    {
+        "node_id": "4566237253",
+        "intersection_num": "99",
+        "total_waiting_time": 3826.0
+    },
+    {
+        "node_id": "1386262552",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 3536.0
+    },
+    {
+        "node_id": "1386268960",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 2670.0
+    },
+    {
+        "node_id": "1386150953",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 817.0
+    },
+    {
+        "node_id": "1876839226",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 243.0
+    },
+    {
+        "node_id": "1876839197",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 21.0
+    },
+    {
+        "node_id": "1386235683",
+        "intersection_num": "Unknown (OSM Node)",
+        "total_waiting_time": 7.0
+    }
+]
