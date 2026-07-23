@@ -367,6 +367,14 @@
                         <marker id="arrow-active" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                             <path d="M 0 1 L 10 5 L 0 9 z" fill="#00e5ff" />
                         </marker>
+                        <!-- 青灰色のマーカー (流入エッジ用) -->
+                        <marker id="arrow-incoming" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#546e7a" />
+                        </marker>
+                        <!-- 青灰色のマーカー (流出エッジ用) -->
+                        <marker id="arrow-outgoing" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#546e7a" />
+                        </marker>
                     </defs>
                     <!-- バックグラウンドグリッド (ライトテーマ用) -->
                     <g stroke="rgba(0,0,0,0.03)" stroke-width="1">
@@ -583,6 +591,132 @@
         }
 
         // SVG描画ロジック (境界ボックス自動フィッティングによる超高精度レンダリング)
+        // 補助関数: 折れ線の平行オフセット計算
+        function getOffsetPoints(points, offset) {
+            if (points.length < 2) return points;
+            const offsetPoints = [];
+            
+            for (let i = 0; i < points.length; i++) {
+                let nx, ny;
+                if (i === 0) {
+                    const dx = points[1][0] - points[0][0];
+                    const dy = points[1][1] - points[0][1];
+                    const len = Math.hypot(dx, dy) || 1;
+                    nx = -dy / len;
+                    ny = dx / len;
+                } else if (i === points.length - 1) {
+                    const dx = points[i][0] - points[i-1][0];
+                    const dy = points[i][1] - points[i-1][1];
+                    const len = Math.hypot(dx, dy) || 1;
+                    nx = -dy / len;
+                    ny = dx / len;
+                } else {
+                    const dx1 = points[i][0] - points[i-1][0];
+                    const dy1 = points[i][1] - points[i-1][1];
+                    const len1 = Math.hypot(dx1, dy1) || 1;
+                    const nx1 = -dy1 / len1;
+                    const ny1 = dx1 / len1;
+
+                    const dx2 = points[i+1][0] - points[i][0];
+                    const dy2 = points[i+1][1] - points[i][1];
+                    const len2 = Math.hypot(dx2, dy2) || 1;
+                    const nx2 = -dy2 / len2;
+                    const ny2 = dx2 / len2;
+
+                    nx = (nx1 + nx2) / 2;
+                    ny = (ny1 + ny2) / 2;
+                    const nLen = Math.hypot(nx, ny) || 1;
+                    nx /= nLen;
+                    ny /= nLen;
+                }
+                offsetPoints.push([
+                    points[i][0] + nx * offset,
+                    points[i][1] + ny * offset
+                ]);
+            }
+            return offsetPoints;
+        }
+
+        // 補助関数: 対向車線(流出)を避けるオフセット方向 (左=1, 右=-1)
+        function getOffsetDirection(edge, isIncoming, allEdges) {
+            if (!isIncoming) return 1;
+            
+            const pts = edge.shape.split(" ").map(pt => pt.split(",").map(Number));
+            const pStart = pts[0];
+            const pEnd = pts[pts.length - 1];
+            const dx = pEnd[0] - pStart[0];
+            const dy = pEnd[1] - pStart[1];
+            const dirLen = Math.hypot(dx, dy) || 1;
+            const ux = dx / dirLen;
+            const uy = dy / dirLen;
+
+            let oppEdge = null;
+            let maxSimilarity = -Infinity;
+            
+            allEdges.forEach(other => {
+                if (other.id === edge.id) return;
+                const oPts = other.shape.split(" ").map(pt => pt.split(",").map(Number));
+                const oStart = oPts[0];
+                const oEnd = oPts[oPts.length - 1];
+                
+                const odx = oEnd[0] - oStart[0];
+                const ody = oEnd[1] - oStart[1];
+                const oLen = Math.hypot(odx, ody) || 1;
+                const oux = odx / oLen;
+                const ouy = ody / oLen;
+                
+                const dot = ux * oux + uy * ouy;
+                const dist = Math.hypot((pStart[0] + pEnd[0])/2 - (oStart[0] + oEnd[0])/2, (pStart[1] + pEnd[1])/2 - (oStart[1] + oEnd[1])/2);
+                
+                if (dot < -0.8 && dist < 100) {
+                    if (-dot > maxSimilarity) {
+                        maxSimilarity = -dot;
+                        oppEdge = other;
+                    }
+                }
+            });
+
+            if (!oppEdge) return 1;
+
+            const oppPts = oppEdge.shape.split(" ").map(pt => pt.split(",").map(Number));
+            const oppPt = oppPts[0];
+            const cross = ux * (oppPt[1] - pStart[1]) - uy * (oppPt[0] - pStart[0]);
+            
+            return cross > 0 ? -1 : 1;
+        }
+
+        // 補助関数: パスの中間点座標と進行方向角度を算出
+        function getPathMidPoint(points) {
+            if (points.length < 2) return null;
+            
+            let totalDist = 0;
+            const dists = [];
+            for (let i = 0; i < points.length - 1; i++) {
+                const d = Math.hypot(points[i+1][0] - points[i][0], points[i+1][1] - points[i][1]);
+                dists.push(d);
+                totalDist += d;
+            }
+            
+            let targetDist = totalDist / 2;
+            let currentDist = 0;
+            
+            for (let i = 0; i < points.length - 1; i++) {
+                if (currentDist + dists[i] >= targetDist) {
+                    const ratio = (targetDist - currentDist) / dists[i];
+                    const x = points[i][0] + ratio * (points[i+1][0] - points[i][0]);
+                    const y = points[i][1] + ratio * (points[i+1][1] - points[i][1]);
+                    
+                    const dx = points[i+1][0] - points[i][0];
+                    const dy = points[i+1][1] - points[i][1];
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    return { x, y, angle };
+                }
+                currentDist += dists[i];
+            }
+            
+            return { x: points[0][0], y: points[0][1], angle: 0 };
+        }
+
         function renderSVG() {
             const drawGroup = document.getElementById("svg-draw-group");
             drawGroup.innerHTML = "";
@@ -625,41 +759,77 @@
             const maxDim = Math.max(width, height, 10); // 最低10m幅を担保してゼロ除算回避
             const scale = (800 * 0.7) / maxDim;
 
-            // 0. 周辺道路 (context_edges) の輪郭を薄いグレーで背景に描画
+            const laneWidth = 14; // 車線幅の共通トークン
+
+            // 道路と車線境界を描画するインナールーチン
+            function drawRoad(edge, isContext) {
+                const pts = edge.shape.split(" ").map(pt => pt.split(",").map(Number));
+                const scaledPts = pts.map(pt => [
+                    (pt[0] - cx) * scale,
+                    (pt[1] - cy) * scale
+                ]);
+                const pathData = scaledPts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt[0]} ${pt[1]}`).join(" ");
+                const roadWidth = edge.numLanes * laneWidth;
+
+                // 下地のアスファルト (黒太線)
+                const baseRoad = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                baseRoad.setAttribute("d", pathData);
+                baseRoad.setAttribute("fill", "none");
+                baseRoad.setAttribute("stroke", "#000000");
+                baseRoad.setAttribute("stroke-width", roadWidth);
+                baseRoad.setAttribute("stroke-linecap", "butt");
+                baseRoad.setAttribute("stroke-linejoin", "round");
+                
+                if (isContext) {
+                    baseRoad.setAttribute("opacity", "0.75");
+                }
+                drawGroup.appendChild(baseRoad);
+
+                // 車線境界の白い破線
+                if (edge.numLanes > 1) {
+                    for (let i = 1; i < edge.numLanes; i++) {
+                        const offsetDist = (i - edge.numLanes / 2) * laneWidth;
+                        const borderPts = getOffsetPoints(scaledPts, offsetDist);
+                        const borderPathData = borderPts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt[0]} ${pt[1]}`).join(" ");
+                        
+                        const borderLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        borderLine.setAttribute("d", borderPathData);
+                        borderLine.setAttribute("fill", "none");
+                        borderLine.setAttribute("stroke", "#ffffff");
+                        borderLine.setAttribute("stroke-width", "1.5");
+                        borderLine.setAttribute("stroke-dasharray", "6,6");
+                        borderLine.setAttribute("stroke-linecap", "butt");
+                        borderLine.setAttribute("stroke-linejoin", "round");
+                        drawGroup.appendChild(borderLine);
+                    }
+                }
+
+                // ホバーとツールチップ登録
+                baseRoad.addEventListener("mouseover", (e) => {
+                    if (!isContext) {
+                        baseRoad.setAttribute("stroke", "#212121");
+                    }
+                    const tooltip = document.getElementById("tooltip");
+                    const label = isContext ? "周辺道路" : (edge.isIncoming ? "流入道路" : "流出道路");
+                    tooltip.innerText = `${label}: ${edge.id} (${edge.numLanes}車線)`;
+                    tooltip.style.display = "block";
+                });
+                baseRoad.addEventListener("mousemove", (e) => {
+                    const tooltip = document.getElementById("tooltip");
+                    tooltip.style.left = (e.pageX + 12) + "px";
+                    tooltip.style.top = (e.pageY + 12) + "px";
+                });
+                baseRoad.addEventListener("mouseout", () => {
+                    baseRoad.setAttribute("stroke", "#000000");
+                    const tooltip = document.getElementById("tooltip");
+                    tooltip.style.display = "none";
+                });
+            }
+
+            // 0. 周辺道路 (context_edges) の描画
             if (currentJunction.context_edges) {
                 currentJunction.context_edges.forEach(edge => {
-                    const pts = edge.shape.split(" ").map(pt => pt.split(",").map(Number));
-                    const pathData = pts.map((pt, i) => {
-                        const px = (pt[0] - cx) * scale;
-                        const py = (pt[1] - cy) * scale;
-                        return `${i === 0 ? 'M' : 'L'} ${px} ${py}`;
-                    }).join(" ");
-
-                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    path.setAttribute("d", pathData);
-                    path.setAttribute("fill", "none");
-                    path.setAttribute("stroke", "rgba(120, 144, 156, 0.35)"); // 薄いグレー輪郭
-                    path.setAttribute("stroke-width", Math.max(edge.numLanes * 2.5, 5)); // やや細めに描画
-                    path.setAttribute("stroke-dasharray", "4,4"); // 輪郭であることを示す破線スタイル
-                    
-                    path.addEventListener("mouseover", (e) => {
-                        path.setAttribute("stroke", "rgba(120, 144, 156, 0.85)");
-                        const tooltip = document.getElementById("tooltip");
-                        tooltip.innerText = `周辺道路: ${edge.id}`;
-                        tooltip.style.display = "block";
-                    });
-                    path.addEventListener("mousemove", (e) => {
-                        const tooltip = document.getElementById("tooltip");
-                        tooltip.style.left = (e.pageX + 12) + "px";
-                        tooltip.style.top = (e.pageY + 12) + "px";
-                    });
-                    path.addEventListener("mouseout", () => {
-                        path.setAttribute("stroke", "rgba(120, 144, 156, 0.35)");
-                        const tooltip = document.getElementById("tooltip");
-                        tooltip.style.display = "none";
-                    });
-                    
-                    drawGroup.appendChild(path);
+                    drawRoad(edge, true);
                 });
             }
 
@@ -673,83 +843,245 @@
             centerNode.setAttribute("stroke-width", "2");
             drawGroup.appendChild(centerNode);
 
-            // 2. 流入エッジ (Incoming) の描画 (アスファルトダークグレー)
+            // 2. 流入・流出エッジの道路自体の描画
             currentJunction.incoming.forEach(edge => {
-                const pts = edge.shape.split(" ").map(pt => pt.split(",").map(Number));
-                const pathData = pts.map((pt, i) => {
-                    const px = (pt[0] - cx) * scale;
-                    const py = (pt[1] - cy) * scale;
-                    return `${i === 0 ? 'M' : 'L'} ${px} ${py}`;
-                }).join(" ");
-
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path.setAttribute("d", pathData);
-                path.setAttribute("fill", "none");
-                path.setAttribute("stroke", "#455a64"); // アスファルトグレー
-                path.setAttribute("stroke-width", Math.max(edge.numLanes * 4, 8)); // 細すぎる線を防ぐ
-                path.setAttribute("marker-end", "url(#arrow)");
-                path.setAttribute("id", `svg-edge-${edge.id}`);
-                
-                path.addEventListener("mouseover", (e) => {
-                    path.setAttribute("stroke", "var(--primary)");
-                    path.setAttribute("marker-end", "url(#arrow-active)"); // 矢印も光らせる
-                    
-                    const tooltip = document.getElementById("tooltip");
-                    tooltip.innerText = `流入道路: ${edge.id} (${edge.numLanes}車線)`;
-                    tooltip.style.display = "block";
-                });
-                path.addEventListener("mousemove", (e) => {
-                    const tooltip = document.getElementById("tooltip");
-                    tooltip.style.left = (e.pageX + 12) + "px";
-                    tooltip.style.top = (e.pageY + 12) + "px";
-                });
-                path.addEventListener("mouseout", () => {
-                    path.setAttribute("stroke", "#455a64");
-                    path.setAttribute("marker-end", "url(#arrow)");
-                    
-                    const tooltip = document.getElementById("tooltip");
-                    tooltip.style.display = "none";
-                });
-                
-                drawGroup.appendChild(path);
+                edge.isIncoming = true;
+                drawRoad(edge, false);
+            });
+            currentJunction.outgoing.forEach(edge => {
+                edge.isIncoming = false;
+                drawRoad(edge, false);
             });
 
-            // 3. 流出エッジ (Outgoing) の描画
+            // 3. 流出車線（Outgoing）の車線ごとの案内ラインの描画
             currentJunction.outgoing.forEach(edge => {
                 const pts = edge.shape.split(" ").map(pt => pt.split(",").map(Number));
-                const pathData = pts.map((pt, i) => {
-                    const px = (pt[0] - cx) * scale;
-                    const py = (pt[1] - cy) * scale;
-                    return `${i === 0 ? 'M' : 'L'} ${px} ${py}`;
-                }).join(" ");
+                const scaledPts = pts.map(pt => [
+                    (pt[0] - cx) * scale,
+                    (pt[1] - cy) * scale
+                ]);
 
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path.setAttribute("d", pathData);
-                path.setAttribute("fill", "none");
-                path.setAttribute("stroke", "#78909c"); // 明るめのアスファルトグレー
-                path.setAttribute("stroke-width", Math.max(edge.numLanes * 4, 8));
-                path.setAttribute("marker-end", "url(#arrow)");
-                
-                path.addEventListener("mouseover", (e) => {
-                    path.setAttribute("stroke", "var(--accent)");
+                for (let j = 0; j < edge.numLanes; j++) {
+                    const outLaneOffset = (((edge.numLanes - 1) - j) - (edge.numLanes - 1) / 2) * laneWidth;
+                    const guidePts = getOffsetPoints(scaledPts, outLaneOffset);
                     
-                    const tooltip = document.getElementById("tooltip");
-                    tooltip.innerText = `流出道路: ${edge.id} (${edge.numLanes}車線)`;
-                    tooltip.style.display = "block";
-                });
-                path.addEventListener("mousemove", (e) => {
-                    const tooltip = document.getElementById("tooltip");
-                    tooltip.style.left = (e.pageX + 12) + "px";
-                    tooltip.style.top = (e.pageY + 12) + "px";
-                });
-                path.addEventListener("mouseout", () => {
-                    path.setAttribute("stroke", "#78909c");
+                    const pathData = guidePts.map((pt, idx) => `${idx === 0 ? 'M' : 'L'} ${pt[0]} ${pt[1]}`).join(" ");
                     
-                    const tooltip = document.getElementById("tooltip");
-                    tooltip.style.display = "none";
-                });
+                    const guideLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    guideLine.setAttribute("d", pathData);
+                    guideLine.setAttribute("fill", "none");
+                    guideLine.setAttribute("stroke", "#546e7a");
+                    guideLine.setAttribute("stroke-width", "2.5");
+                    guideLine.setAttribute("stroke-linejoin", "round");
+                    guideLine.setAttribute("marker-end", "url(#arrow-outgoing)");
+                    
+                    // ホバー効果
+                    guideLine.addEventListener("mouseover", () => {
+                        guideLine.setAttribute("stroke", "#00bcd4");
+                        const tooltip = document.getElementById("tooltip");
+                        tooltip.innerText = `流出車線: ${edge.id} [車線 ${j}]`;
+                        tooltip.style.display = "block";
+                    });
+                    guideLine.addEventListener("mousemove", (e) => {
+                        const tooltip = document.getElementById("tooltip");
+                        tooltip.style.left = (e.pageX + 12) + "px";
+                        tooltip.style.top = (e.pageY + 12) + "px";
+                    });
+                    guideLine.addEventListener("mouseout", () => {
+                        guideLine.setAttribute("stroke", "#546e7a");
+                        const tooltip = document.getElementById("tooltip");
+                        tooltip.style.display = "none";
+                    });
+                    
+                    drawGroup.appendChild(guideLine);
+                    
+                    // シアンアクセントマーク (#00BCD4)
+                    const mid = getPathMidPoint(guidePts);
+                    if (mid) {
+                        const triangle = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                        triangle.setAttribute("points", "-6,-5 6,0 -6,5");
+                        triangle.setAttribute("fill", "#00BCD4");
+                        triangle.setAttribute("transform", `translate(${mid.x}, ${mid.y}) rotate(${mid.angle})`);
+                        drawGroup.appendChild(triangle);
+                    }
+                }
+            });
+
+            // 4. 流入車線（Incoming）の車線ごとの案内ラインと分岐矢印の描画
+            currentJunction.incoming.forEach(edge => {
+                const pts = edge.shape.split(" ").map(pt => pt.split(",").map(Number));
+                const scaledPts = pts.map(pt => [
+                    (pt[0] - cx) * scale,
+                    (pt[1] - cy) * scale
+                ]);
                 
-                drawGroup.appendChild(path);
+                const oppDir = getOffsetDirection(edge, true, allEdges);
+
+                for (let i = 0; i < edge.numLanes; i++) {
+                    const inLaneOffset = (((edge.numLanes - 1) - i) - (edge.numLanes - 1) / 2) * laneWidth;
+                    const inBaseOffset = oppDir * ((edge.numLanes / 2) * laneWidth + 14);
+                    const totalOffsetIn = inLaneOffset + inBaseOffset;
+                    const guidePts = getOffsetPoints(scaledPts, totalOffsetIn);
+                    
+                    const pEnd = guidePts[guidePts.length - 1];
+
+                    // 1. 流入エッジ終端の進行方向ベクトルの算出
+                    let ux_in = 0, uy_in = 0;
+                    if (guidePts.length >= 2) {
+                        const pPenultimate = guidePts[guidePts.length - 2];
+                        const dx_in = pEnd[0] - pPenultimate[0];
+                        const dy_in = pEnd[1] - pPenultimate[1];
+                        const len_in = Math.hypot(dx_in, dy_in) || 1;
+                        ux_in = dx_in / len_in;
+                        uy_in = dy_in / len_in;
+                    } else {
+                        const dx_in = jx - pEnd[0];
+                        const dy_in = jy - pEnd[1];
+                        const len_in = Math.hypot(dx_in, dy_in) || 1;
+                        ux_in = dx_in / len_in;
+                        uy_in = dy_in / len_in;
+                    }
+
+                    // エッジの長さに応じて、引き戻し幅 D を制限し方向逆転を防ぐ
+                    const edgeLen = Math.hypot(pEnd[0] - guidePts[0][0], pEnd[1] - guidePts[0][1]) || 1;
+                    const D = Math.min(35, edgeLen * 0.4);
+                    const pForkStart = [
+                        pEnd[0] - ux_in * D,
+                        pEnd[1] - uy_in * D
+                    ];
+
+                    const bodyPts = [...guidePts];
+                    bodyPts[bodyPts.length - 1] = pForkStart;
+                    
+                    const pathData = bodyPts.map((pt, idx) => `${idx === 0 ? 'M' : 'L'} ${pt[0]} ${pt[1]}`).join(" ");
+                    
+                    const guideLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    guideLine.setAttribute("d", pathData);
+                    guideLine.setAttribute("fill", "none");
+                    guideLine.setAttribute("stroke", "#546e7a");
+                    guideLine.setAttribute("stroke-width", "2.5");
+                    guideLine.setAttribute("stroke-linejoin", "round");
+                    
+                    // ホバー効果
+                    guideLine.addEventListener("mouseover", () => {
+                        guideLine.setAttribute("stroke", "#ff5722");
+                        const tooltip = document.getElementById("tooltip");
+                        tooltip.innerText = `流入車線: ${edge.id} [車線 ${i}]`;
+                        tooltip.style.display = "block";
+                    });
+                    guideLine.addEventListener("mousemove", (e) => {
+                        const tooltip = document.getElementById("tooltip");
+                        tooltip.style.left = (e.pageX + 12) + "px";
+                        tooltip.style.top = (e.pageY + 12) + "px";
+                    });
+                    guideLine.addEventListener("mouseout", () => {
+                        guideLine.setAttribute("stroke", "#546e7a");
+                        const tooltip = document.getElementById("tooltip");
+                        tooltip.style.display = "none";
+                    });
+                    
+                    drawGroup.appendChild(guideLine);
+                    
+                    // オレンジアクセントマーク (#FF5722)
+                    const mid = getPathMidPoint(bodyPts); // 案内線本体の中間点に配置
+                    if (mid) {
+                        const triangle = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                        triangle.setAttribute("points", "-6,-5 6,0 -6,5");
+                        triangle.setAttribute("fill", "#FF5722");
+                        triangle.setAttribute("transform", `translate(${mid.x}, ${mid.y}) rotate(${mid.angle})`);
+                        drawGroup.appendChild(triangle);
+                    }
+                    
+                    // この車線から伸びる接続（connections）を取得して分岐矢印を描画
+                    const conns = currentJunction.connections ? currentJunction.connections.filter(c => c.from === edge.id && c.fromLane === i) : [];
+                    
+                    conns.forEach(conn => {
+                        const outEdge = currentJunction.outgoing.find(e => e.id === conn.to);
+                        if (!outEdge) return;
+                        
+                        // 流出車線の交差点側始点
+                        const outPts = outEdge.shape.split(" ").map(pt => pt.split(",").map(Number));
+                        const scaledOutPts = outPts.map(pt => [
+                            (pt[0] - cx) * scale,
+                            (pt[1] - cy) * scale
+                        ]);
+                        const outLaneOffset = (((outEdge.numLanes - 1) - conn.toLane) - (outEdge.numLanes - 1) / 2) * laneWidth;
+                        const guidePtsOut = getOffsetPoints(scaledOutPts, outLaneOffset);
+                        
+                        // 2. 流出エッジ始端の進行方向ベクトルの算出
+                        let ux_out = ux_in, uy_out = uy_in;
+                        if (guidePtsOut.length >= 2) {
+                            const pStartOut = guidePtsOut[0];
+                            const pSecondOut = guidePtsOut[1];
+                            const dx_out = pSecondOut[0] - pStartOut[0];
+                            const dy_out = pSecondOut[1] - pStartOut[1];
+                            const len_out = Math.hypot(dx_out, dy_out) || 1;
+                            ux_out = dx_out / len_out;
+                            uy_out = dy_out / len_out;
+                        }
+                        
+                        // 流入方向の法線（左側90度）
+                        const ux_perp = -uy_in;
+                        const uy_perp = ux_in;
+                        
+                        // 流出方向の法線方向への射影（曲がる向きと量）
+                        const dot_perp = ux_out * ux_perp + uy_out * uy_perp;
+                        
+                        // 右左折判定 (直進以外の分岐は手前で折り曲げて干渉を防ぐ)
+                        const isTurn = Math.abs(dot_perp) > 0.3;
+                        const H_offset = isTurn ? Math.min(16, edgeLen * 0.2) : 0; // 短いエッジの場合は手前オフセットも制限
+                        
+                        // 先端の横ずれ量 (スプレッド。短いエッジの場合はスプレッド幅も制限)
+                        const S = dot_perp * Math.min(18, edgeLen * 0.4);
+                        
+                        // 先端座標 (直進は道路の終端ライン上、右左折は手前オフセットしたライン上)
+                        const pArrow = [
+                            pEnd[0] - ux_in * H_offset + ux_perp * S,
+                            pEnd[1] - uy_in * H_offset + uy_perp * S
+                        ];
+                        
+                        // 中間点 (本線上に配置し、逆側への膨らみ(S字デグレ)を完全に排除する数学的算出)
+                        const k = Math.min(18, edgeLen * 0.4);
+                        const dot_in_out = ux_out * ux_in + uy_out * uy_in;
+                        const d_mid = H_offset + k * dot_in_out;
+                        const pMid = [
+                            pEnd[0] - ux_in * d_mid,
+                            pEnd[1] - uy_in * d_mid
+                        ];
+                        
+                        const pathData = `M ${pForkStart[0]} ${pForkStart[1]} L ${pMid[0]} ${pMid[1]} L ${pArrow[0]} ${pArrow[1]}`;
+                        
+                        // 折れ線矢印の描画
+                        const arrowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        arrowPath.setAttribute("d", pathData);
+                        arrowPath.setAttribute("fill", "none");
+                        arrowPath.setAttribute("stroke", "#546e7a");
+                        arrowPath.setAttribute("stroke-width", "2.5");
+                        arrowPath.setAttribute("stroke-linecap", "round");
+                        arrowPath.setAttribute("stroke-linejoin", "round");
+                        arrowPath.setAttribute("marker-end", "url(#arrow-incoming)");
+                        
+                        // ホバー効果
+                        arrowPath.addEventListener("mouseover", () => {
+                            arrowPath.setAttribute("stroke", "var(--primary)");
+                            const tooltip = document.getElementById("tooltip");
+                            tooltip.innerText = `接続先: ${conn.to} [車線 ${conn.toLane}] (方向: ${conn.dir})`;
+                            tooltip.style.display = "block";
+                        });
+                        arrowPath.addEventListener("mousemove", (e) => {
+                            const tooltip = document.getElementById("tooltip");
+                            tooltip.style.left = (e.pageX + 12) + "px";
+                            tooltip.style.top = (e.pageY + 12) + "px";
+                        });
+                        arrowPath.addEventListener("mouseout", () => {
+                            arrowPath.setAttribute("stroke", "#546e7a");
+                            const tooltip = document.getElementById("tooltip");
+                            tooltip.style.display = "none";
+                        });
+                        
+                        drawGroup.appendChild(arrowPath);
+                    });
+                }
             });
         }
 
