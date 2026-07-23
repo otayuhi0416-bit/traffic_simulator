@@ -32,8 +32,6 @@ def build_network():
         "--no-turnarounds",
         "--junctions.join",
         "--keep-edges.by-vclass", "passenger",
-        "--remove-edges.by-type", "highway.service,highway.track,highway.path,highway.footway,highway.pedestrian,highway.cycleway,highway.steps,highway.bridleway",
-        "--proj.utm", "true",
     ]
     
     # パッチファイルの有無を確認して引数に追加
@@ -51,17 +49,17 @@ def build_network():
             cmd.extend(["--node-files", nod_patch])
             print(f"Applying node patch: {nod_patch}")
             
-        # tls (traffic light logic)
-        tls_patch = os.path.join(patch_dir, "tls.tll.xml")
-        if os.path.exists(tls_patch):
-            cmd.extend(["--tllogic-files", tls_patch])
-            print(f"Applying TLS logic patch: {tls_patch}")
-            
         # edges
         edg_patch = os.path.join(patch_dir, "edges.edg.xml")
         if os.path.exists(edg_patch):
             cmd.extend(["--edge-files", edg_patch])
             print(f"Applying edge patch: {edg_patch}")
+            
+        # traffic lights
+        tfl_patch = os.path.join(patch_dir, "traffic_lights.tfl.xml")
+        if os.path.exists(tfl_patch):
+            cmd.extend(["--tfl-files", tfl_patch])
+            print(f"Applying traffic light patch: {tfl_patch}")
             
     print(f"Running command: {' '.join(cmd)}")
     

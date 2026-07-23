@@ -13,7 +13,7 @@ if "SUMO_HOME" in os.environ:
 import traci
 
 def load_signal_control(target_date, target_hour):
-    control_csv = "resources/typeC_akita_2026_04/秋田県警_制御_202604.csv"
+    control_csv = "resources/typeC_aomori_2026_05/青森県警_制御_202605.csv"#変更
     signals = {}
     
     target_time_str = f"{target_date} {target_hour:02d}:00"
@@ -113,7 +113,7 @@ def apply_signal_timing(match_table, control_data):
         except Exception as e:
             print(f"Failed to apply signal timing at TLS {tls_id}: {e}")
 
-def run_simulation(target_date="2026/04/08", start_hour=8, use_gui=True):
+def run_simulation(target_date="2026/05/08", start_hour=8, use_gui=True):#変更
     sumo_binary = "sumo-gui" if use_gui else "sumo"
     
     sumo_home = os.environ.get("SUMO_HOME")
@@ -121,7 +121,7 @@ def run_simulation(target_date="2026/04/08", start_hour=8, use_gui=True):
     if not (os.path.exists(binary_path) or os.path.exists(binary_path + ".exe")):
         binary_path = sumo_binary
         
-    config_file = "sim/akita.sumocfg"
+    config_file = "sim/aomori.sumocfg"#変更
     match_table_path = "data/match_table.json"
     
     if not os.path.exists(config_file):
@@ -159,7 +159,7 @@ def run_simulation(target_date="2026/04/08", start_hour=8, use_gui=True):
         print("Simulation finished.")
 
 if __name__ == "__main__":
-    target_date = "2026/04/08"
+    target_date = "2026/05/08"#変更
     start_hour = 8
     use_gui = True
     
